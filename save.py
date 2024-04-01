@@ -6,13 +6,7 @@ async def write_to_file_1(request):
     data = await request.json()
     async with aiofiles.open("1.txt", mode="a") as fp:
         await fp.write(
-            " | "
-            + data["id"]
-            + " | "
-            + data["time_from"]
-            + " | "
-            + data["time_to"]
-            + " |\n"
+            " | " + data["id"] + " | " + data["time_from"] + " | " + data["time_to"] + " |\n"
         )
     return web.Response(body=str("DONE"))
 

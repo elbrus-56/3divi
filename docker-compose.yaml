@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  client:
+    build:
+      context: .
+      dockerfile: ./Client.Dockerfile
+    ports:
+      - 5000:5000
+    depends_on:
+      - server
+    networks:
+      - local
+
+  server:
+    build:
+      context: .
+      dockerfile: ./Server.Dockerfile
+    ports:
+      - 5001:5001
+    depends_on:
+      - process
+      - save
+    networks:
+      - local
+
+  process:
+    build:
+      context: .
+      dockerfile: ./Process.Dockerfile
+    ports:
+      - 5002:5002
+    depends_on:
+      - save
+    networks:
+      - local
+
+  save:
+    build:
+      context: .
+      dockerfile: ./Save.Dockerfile
+    ports:
+      - 5003:5003
+    volumes:
+      - .:/app
+    networks:
+      - local
+
+networks:
+  local:

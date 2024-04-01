@@ -19,7 +19,7 @@ logger = logging.getLogger("client")
 
 
 def sync_make_request(payload):
-    url = "http://127.0.0.1:5001/handler"
+    url = "http://server:5001/handler"
     thread = current_thread()
     logger.info(f"TREAD: {thread.name}, DATA: {payload}")
     response = requests.post(url, data=json.dumps(payload))

@@ -23,8 +23,8 @@ async def handle(request):
         "id": data["request"]["id"],
         "time_from": str(_ts),
     }
-    await async_make_request("http://127.0.0.1:5003/save_2", recieve_msg)
-    await async_make_request("http://127.0.0.1:5002/sleeper", data)
+    await async_make_request("http://save:5003/save_2", recieve_msg)
+    await async_make_request("http://process:5002/sleeper", data)
     _te = datetime.datetime.now()
     print(f"end, {data} => {_te}")
     result_msg = {
@@ -32,7 +32,7 @@ async def handle(request):
         "time_from": str(_ts),
         "time_to": str(_te),
     }
-    await async_make_request("http://127.0.0.1:5003/save_1", result_msg)
+    await async_make_request("http://save:5003/save_1", result_msg)
     return web.Response(body=json.dumps({"asyncAnswer": "Ok"}))
 
 
