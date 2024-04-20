@@ -1,11 +1,9 @@
-import asyncio
-import functools
 import json
+from queue import Queue
 import random
-from threading import current_thread
+from threading import Thread, current_thread
 import uuid
 from aiohttp import web
-import concurrent.futures
 
 import requests
 import logging
@@ -17,8 +15,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("client")
 
+queue = Queue()
 
-def sync_make_request(payload):
+
+def sync_make_request(payload: dict):
     url = "http://server:5001/handler"
     thread = current_thread()
     logger.info(f"TREAD: {thread.name}, DATA: {payload}")
@@ -26,12 +26,26 @@ def sync_make_request(payload):
     return response.json()
 
 
+def put_queue(payloads: list):
+    for payload in payloads:
+        queue.put(payload)
+    print(queue.qsize())
+
+
+def get_queue():
+    while True:
+        item = queue.get()
+        if item is None:
+            break
+        sync_make_request(item)
+        queue.task_done()
+
+
 async def handle(request):
-    connection_count = request.rel_url.query.get("connection_count") or 10
+    connection_count = request.rel_url.query.get("connection_count") or 5
     connection_value = request.rel_url.query.get("connection_value") or 10
     delay_range = request.rel_url.query.get("delay_range") or 5
 
-    loop = asyncio.get_running_loop()
     payloads = [
         {
             "request": {
@@ -41,23 +55,20 @@ async def handle(request):
         }
         for _ in range(int(connection_value))
     ]
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=int(connection_count)
-    ) as pool:
-        tasks = [
-            loop.run_in_executor(
-                pool,
-                functools.partial(sync_make_request, payload),
-            )
-            for payload in payloads
-        ]
-        results = await asyncio.gather(*tasks)
 
-    return web.Response(body=str(results))
+    put_queue(payloads)
+
+    for i in range(connection_count):
+        print(connection_count)
+        thread = Thread(target=get_queue)
+        thread.start()
+
+    return web.Response(body=json.dumps({"asyncAnswer": "Ok"}))
 
 
 app = web.Application()
 app.add_routes([web.get("/", handle)])
+
 
 if __name__ == "__main__":
     web.run_app(app, port=5000)
